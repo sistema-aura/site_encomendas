@@ -187,20 +187,31 @@ await push(ref(db, "orders"), payload);
 try {
   const webhookURL = "https://discord.com/api/webhooks/1441576772519989279/LW4wUHkAkJ1ZsAKXrp2O165xftNRR0nrK3EtFMZV8r3VRStkFit2yntkDg2ll-VEHG5u";
 
-  const itensTexto = Object.entries(items)
+  const itensSelecionados = Object.entries(items)
     .filter(([_, q]) => q > 0)
     .map(([nome, q]) => `• **${nome}**: ${q}`)
     .join("\n");
 
-  const discordPayload = {
-    content: `📦 **Nova Encomenda AURA**
-👤 Nome: ${name}
-📱 Telemóvel: ${phone}
-🏷️ Tipo: ${buyerType === "faccao" ? "Facção (" + tipoFaccaoSelecionada + ")" : "Civil"}
-${buyerType === "faccao" ? "🛡️ Facção: " + faccaoName : ""}
+  const total = Object.entries(items)
+    .reduce((soma, [nome, q]) => soma + (precos[nome]?.[buyerType === "faccao" ? tipoFaccaoSelecionada : "civil"] || 0) * q, 0);
 
-🧾 **Itens**
-${itensTexto || "— Nenhum item selecionado —"}`
+  const discordPayload = {
+    content: "<292079962419101699> 🚀 Nova encomenda recebida!",
+    embeds: [{
+      title: "📦 Encomenda Registrada",
+      color: 0x8a2be2, // Roxo AURA
+      fields: [
+        { name: "👤 Comprador", value: name, inline: true },
+        { name: "💼 Facção", value: faccaoName || "—", inline: true },
+        { name: "📞 Telefone", value: phone, inline: true },
+        { name: "📅 Entrega Prevista", value: new Date().toLocaleDateString("pt-BR"), inline: true },
+        { name: "📌 Tipo de Comprador", value: buyerType === "faccao" ? "Facção" : "Civil", inline: true },
+        { name: "🛒 Itens Solicitados", value: itensSelecionados || "— Nenhum —", inline: false },
+        { name: "💰 Valor Total", value: `R$ ${total.toLocaleString("pt-BR")}`, inline: true }
+      ],
+      footer: { text: "Sistema de Encomendas AURA" },
+      timestamp: new Date().toISOString()
+    }]
   };
 
   await fetch(webhookURL, {
@@ -211,6 +222,7 @@ ${itensTexto || "— Nenhum item selecionado —"}`
 } catch (err) {
   console.error("Erro ao enviar para o Discord:", err);
 }
+
 /* ======= FIM DISCORD ======= */
 
 document.getElementById("orderForm").reset();
