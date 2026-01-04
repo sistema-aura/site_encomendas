@@ -96,7 +96,16 @@
       return Object.entries(items).filter(([_,q])=>q>0).map(([k,q])=>`${esc(k)} × ${q}`).join("<br>") || `<span class='muted'>(Sem itens)</span>`;
     }
     function esc(s){return (s||"").replace(/[&<>"]/, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-    function fmt(i, locale = 'pt-PT'){try{return new Date(i).toLocaleString(locale);}catch{return i;}}
+    ffunction fmt(i, locale = 'pt-PT') {
+  try {
+    return new Date(i).toLocaleString(locale, {
+      timeZone: locale === 'pt-BR' ? 'America/Sao_Paulo' : 'Europe/Lisbon'
+    });
+  } catch {
+    return i;
+  }
+}
+
   </script>
 </body>
 </html>
