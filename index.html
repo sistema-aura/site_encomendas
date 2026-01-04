@@ -181,9 +181,41 @@
         name, phone, faccao_name: faccaoName, items, completed: false
       };
 
-      await push(ref(db, "orders"), payload);
-      document.getElementById("orderForm").reset();
-      tipoFaccaoSelecionada = "normal";
+await push(ref(db, "orders"), payload);
+
+/* ======= DISCORD WEBHOOK AQUI ======= */
+try {
+  const webhookURL = "https://discord.com/api/webhooks/SEU_WEBHOOK_AQUI";
+
+  const itensTexto = Object.entries(items)
+    .filter(([_, q]) => q > 0)
+    .map(([nome, q]) => `• **${nome}**: ${q}`)
+    .join("\n");
+
+  const discordPayload = {
+    content: `📦 **Nova Encomenda AURA**
+👤 Nome: ${name}
+📱 Telemóvel: ${phone}
+🏷️ Tipo: ${buyerType === "faccao" ? "Facção (" + tipoFaccaoSelecionada + ")" : "Civil"}
+${buyerType === "faccao" ? "🛡️ Facção: " + faccaoName : ""}
+
+🧾 **Itens**
+${itensTexto || "— Nenhum item selecionado —"}`
+  };
+
+  await fetch(webhookURL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(discordPayload)
+  });
+} catch (err) {
+  console.error("Erro ao enviar para o Discord:", err);
+}
+/* ======= FIM DISCORD ======= */
+
+document.getElementById("orderForm").reset();
+tipoFaccaoSelecionada = "normal";
+
       document.getElementById("faccao_block").style.display = "none";
       calcularTotal();
       document.getElementById("successPopup").style.display = "block";
