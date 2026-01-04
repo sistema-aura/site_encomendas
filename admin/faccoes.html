@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Facções - Admin AURA</title>
+  <link rel="icon" href="../Aurinha.png" />
+  <style>
+    :root{--bg:#0f0320;--glass:rgba(255,255,255,0.06);--accent:#c084fc;--muted:rgba(255,255,255,0.88)}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui;overflow-x:hidden}
+    body{background:linear-gradient(180deg,#0b0220 0%, #160428 100%);display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted)}
+    .card{width:700px;max-width:95vw;background:var(--glass);border-radius:16px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,0.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.06)}
+    h1{font-size:20px;color:#fff;margin-bottom:20px;text-align:center}
+    table{width:100%;border-collapse:collapse;margin-top:20px}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:14px;text-align:left;vertical-align:middle}
+    .btn{background:var(--accent);color:#fff;padding:6px 12px;border-radius:8px;border:0;cursor:pointer;font-size:13px;margin-left:5px}
+    select,input{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#fff;font-size:13px}
+    .form-inline{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .muted{color:rgba(255,255,255,0.7)}
+    .floaty{
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      width:80px;
+      animation: float 3s ease-in-out infinite;
+      opacity:0.9;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Gestão de Facções</h1>
+
+    <div class="form-inline">
+      <input type="text" id="facNome" placeholder="Nome da Facção">
+      <select id="facTipo">
+        <option value="normal">Normal</option>
+        <option value="parceria">Parceria</option>
+        <option value="alianca">Aliança</option>
+      </select>
+      <button class="btn" onclick="adicionarFaccao()">Adicionar</button>
+      <button class="btn" onclick="history.back()">← Voltar</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Nome</th><th>Tipo</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="facTable"></tbody>
+    </table>
+  </div>
+
+  <img src="../fantasma_aura_sem_fundo.png" alt="fantasma aura" class="floaty">
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getDatabase, ref, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyADKtlqJ-_Cb-ty1rT6gTjLw6BX5gA5JnY",
+      authDomain: "encomendas-aura.firebaseapp.com",
+      projectId: "encomendas-aura",
+      storageBucket: "encomendas-aura.appspot.com",
+      messagingSenderId: "552913969297",
+      appId: "1:552913969297:web:f863b73e3d0caeeafddf30",
+      databaseURL: "https://encomendas-aura-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const faccoesRef = ref(db, "faccoes");
+
+    function carregarFaccoes() {
+      onValue(faccoesRef, snap => {
+        const data = snap.val() || {};
+        const lista = Object.entries(data);
+        const tb = document.getElementById("facTable");
+        tb.innerHTML = lista.map(([id, f]) => `
+          <tr>
+            <td>${f.nome}</td>
+            <td>
+              <select onchange="editarTipo('${id}', this.value)">
+                <option value="normal" ${f.tipo==='normal'?'selected':''}>Normal</option>
+                <option value="parceria" ${f.tipo==='parceria'?'selected':''}>Parceria</option>
+                <option value="alianca" ${f.tipo==='alianca'?'selected':''}>Aliança</option>
+              </select>
+            </td>
+            <td><button class="btn" onclick="removerFaccao('${id}')">Eliminar</button></td>
+          </tr>`).join("");
+      });
+    }
+
+    window.adicionarFaccao = () => {
+      const nome = document.getElementById("facNome").value.trim();
+      const tipo = document.getElementById("facTipo").value;
+      if (!nome) return alert("Nome inválido");
+      push(faccoesRef, { nome, tipo });
+      document.getElementById("facNome").value = "";
+    };
+
+    window.removerFaccao = (id) => {
+      if (confirm("Eliminar esta facção?")) remove(ref(db, `faccoes/${id}`));
+    };
+
+    window.editarTipo = (id, novoTipo) => {
+      update(ref(db, `faccoes/${id}`), { tipo: novoTipo });
+    };
+
+    carregarFaccoes();
+  </script>
+</body>
+</html>

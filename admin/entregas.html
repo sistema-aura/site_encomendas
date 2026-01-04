@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Entregas - Admin AURA</title>
+  <link rel="icon" href="../Aurinha.png" />
+  <style>
+    :root{--bg:#0f0320;--glass:rgba(255,255,255,0.06);--accent:#c084fc;--muted:rgba(255,255,255,0.88)}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui;}
+    body{background:linear-gradient(180deg,#0b0220 0%, #160428 100%);padding:40px;color:var(--muted)}
+    h1{font-size:20px;color:#fff;margin-bottom:20px;text-align:center}
+    table{width:100%;border-collapse:collapse;margin-top:20px}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:14px;text-align:left;vertical-align:top}
+    .muted{color:rgba(255,255,255,0.6)}
+    .btn{background:var(--accent);color:#fff;padding:6px 12px;border-radius:8px;border:0;cursor:pointer;font-size:13px;text-decoration:none}
+    .btn.small{padding:4px 8px;font-size:12px}
+    .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .ghost {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 100px;
+      opacity: 0.9;
+      animation: float 4s ease-in-out infinite;
+      z-index: 1000;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>Encomendas Entregues</h1>
+    <a href="/admin.html" class="btn">← Voltar</a>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Data</th><th>Nome</th><th>Facção</th><th>Itens</th><th>Responsável</th><th>Entregue em (PT / BR)</th><th>Ações</th></tr>
+    </thead>
+    <tbody id="tbodyEntregues"></tbody>
+  </table>
+
+  <img src="../fantasma_aura_sem_fundo.png" alt="Fantasma Aura" class="ghost">
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyADKtlqJ-_Cb-ty1rT6gTjLw6BX5gA5JnY",
+      authDomain: "encomendas-aura.firebaseapp.com",
+      projectId: "encomendas-aura",
+      storageBucket: "encomendas-aura.firebasestorage.app",
+      messagingSenderId: "552913969297",
+      appId: "1:552913969297:web:f863b73e3d0caeeafddf30",
+      databaseURL: "https://encomendas-aura-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const ordersRef = ref(db, "orders");
+    const tbody = document.getElementById("tbodyEntregues");
+
+    onValue(ordersRef, snap => {
+      const data = snap.val() || {};
+      const entregues = Object.entries(data).filter(([_, o]) => o.completed);
+
+      tbody.innerHTML = entregues.map(([id, o]) => {
+        return `<tr>
+          <td>${fmt(o.createdAt)}</td>
+          <td>${esc(o.name)}<br><span class="muted">${esc(o.phone||"")}</span></td>
+          <td>${esc(o.faccao_name||"-")}</td>
+          <td>${renderItems(o.items||{})}</td>
+          <td>${esc(o.responsavel||"-")}</td>
+          <td>
+            <div><b>PT:</b> ${fmt(o.entregueEm, 'pt-PT')}</div>
+            <div><b>BR:</b> ${fmt(o.entregueEm, 'pt-BR')}</div>
+          </td>
+          <td><button class="btn small" onclick="reabrir('${id}')">Reabrir</button></td>
+        </tr>`;
+      }).join("");
+    });
+
+    window.reabrir = (id) => {
+      update(ref(db, `orders/${id}`), {
+        completed: false,
+        entregueEm: null
+      });
+    };
+
+    function renderItems(items){
+      return Object.entries(items).filter(([_,q])=>q>0).map(([k,q])=>`${esc(k)} × ${q}`).join("<br>") || `<span class='muted'>(Sem itens)</span>`;
+    }
+    function esc(s){return (s||"").replace(/[&<>"]/, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+    function fmt(i, locale = 'pt-PT'){try{return new Date(i).toLocaleString(locale);}catch{return i;}}
+  </script>
+</body>
+</html>

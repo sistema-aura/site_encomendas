@@ -1,0 +1,14 @@
+{
+  "M1911": { "civil": 1500, "normal": 1300, "parceria": 1200, "alianca": 1000 },
+  "ATI FX45": { "civil": 1800, "normal": 1600, "parceria": 1400, "alianca": 1200 },
+  "Munição de Pistola": { "civil": 50, "normal": 40, "parceria": 35, "alianca": 30 },
+  "Sub": { "civil": 2200, "normal": 2000, "parceria": 1800, "alianca": 1600 },
+  "Fuzil": { "civil": 2700, "normal": 2500, "parceria": 2300, "alianca": 2100 },
+  "Silenciador": { "civil": 800, "normal": 700, "parceria": 600, "alianca": 500 },
+  "Pente Estendido": { "civil": 300, "normal": 250, "parceria": 200, "alianca": 150 },
+  "Mira Holográfica": { "civil": 500, "normal": 450, "parceria": 400, "alianca": 350 },
+  "Empunhadura": { "civil": 200, "normal": 180, "parceria": 150, "alianca": 120 },
+  "Lanterna": { "civil": 150, "normal": 130, "parceria": 110, "alianca": 100 },
+  "Lavagem": { "civil": 1000, "normal": 900, "parceria": 800, "alianca": 700 },
+  "Moeda do Caruso": { "civil": 0, "normal": 1500, "parceria": 1000, "alianca": 800 }
+}

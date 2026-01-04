@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Encomendas</title>
+  <link rel="icon" href="Aurinha.png" />
+  <style>
+    :root{
+      --bg:#0f0320; --glass:rgba(255,255,255,0.06);
+      --accent:#8a2be2; --muted:rgba(255,255,255,0.88);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui;}
+    body{background:linear-gradient(180deg,#0b0220 0%, #160428 100%);display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted)}
+    .card{width:960px;max-width:95vw;background:var(--glass);border-radius:16px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,0.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.06)}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:20px}
+    header img{width:64px;height:64px;border-radius:12px;object-fit:cover}
+    h1{margin:0;font-size:22px;color:#fff}
+    .block{background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03));border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px;margin:18px 0}
+    .block h3{margin:0 0 14px 0;color:#fff;font-size:17px}
+    form{display:flex;flex-direction:column;gap:24px}
+    label{display:block;font-size:13px;margin-bottom:6px;color:rgba(255,255,255,0.9)}
+    input[type=text],input[type=tel],select{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);
+      background:rgba(255,255,255,0.03);color:var(--muted);box-sizing:border-box;
+    }
+    .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:10px}
+    .item{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04)}
+    .qty{width:80px}
+    .btn{background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;border:0;cursor:pointer;font-weight:500}
+    .muted{color:rgba(255,255,255,0.7)}
+    .success-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(20,0,40,0.9);padding:30px 40px;border-radius:20px;text-align:center;box-shadow:0 0 30px rgba(138,43,226,0.6);border:1px solid var(--accent);color:#fff;font-size:18px;font-weight:600;animation:fadeIn .3s ease;z-index:999}
+    @keyframes fadeIn{from{opacity:0;transform:translate(-50%,-55%)}to{opacity:1;transform:translate(-50%,-50%)}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <header>
+      <img src="Aurinha.png" alt="Aurinha" />
+      <div><h1>Encomendas</h1></div>
+    </header>
+    <form id="orderForm" autocomplete="off">
+      <div class="block">
+        <h3>Identificação</h3>
+        <label>És Civil ou Facção?</label>
+        <select name="buyer_type" id="buyer_type">
+          <option value="civil">Civil</option>
+          <option value="faccao">Facção</option>
+        </select>
+        <label>Nome</label>
+        <input type="text" name="name" id="name" required>
+        <label>Telemóvel</label>
+        <input type="tel" name="phone" id="phone" placeholder="(055) 000-000" pattern="\(055\)\s\d{3}-\d{3}" required>
+      </div>
+
+      <div class="block" id="faccao_block" style="display:none">
+        <h3>Dados da Facção</h3>
+        <label>Qual é a facção?</label>
+        <input list="faccoes" name="faccao_name" id="faccao_name">
+        <datalist id="faccoes"></datalist>
+      </div>
+
+      <div class="block">
+        <h3>Itens</h3>
+        <div class="items" id="itemsGrid"></div>
+        <div style="margin-top:15px;text-align:right;font-weight:600" id="totalDisplay">Total: R$ 0</div>
+      </div>
+
+      <div class="block" style="text-align:right">
+        <button type="submit" class="btn">Enviar Encomenda</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="successPopup" class="success-popup" style="display:none">✅ Encomenda finalizada!</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getDatabase, ref, get, push } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyADKtlqJ-_Cb-ty1rT6gTjLw6BX5gA5JnY",
+      authDomain: "encomendas-aura.firebaseapp.com",
+      projectId: "encomendas-aura",
+      storageBucket: "encomendas-aura.appspot.com",
+      messagingSenderId: "552913969297",
+      appId: "1:552913969297:web:f863b73e3d0caeeafddf30",
+      databaseURL: "https://encomendas-aura-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const PRODUCTS = [
+      "M1911","ATI FX45","Munição de Pistola","Munição de Sub","Munição de Fuzil",
+      "Silenciador","Pente Estendido","Mira Holográfica","Empunhadura","Lanterna",
+      "Lavagem","Moeda do Caruso"
+    ];
+
+    let precos = {}, faccoes = [], tipoFaccaoSelecionada = "normal";
+
+    // Carregar preços
+    fetch("data/precos.json").then(r => r.json()).then(data => {
+      precos = data;
+      calcularTotal();
+    });
+
+    // Carregar facções do Firebase
+    async function carregarFaccoes() {
+      const snapshot = await get(ref(db, "faccoes"));
+      const data = snapshot.val() || {};
+      faccoes = Object.entries(data).map(([id, f]) => ({ id, nome: f.nome, tipo: f.tipo }));
+      const dl = document.getElementById("faccoes");
+      dl.innerHTML = "";
+      faccoes.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f.nome;
+        dl.appendChild(opt);
+      });
+    }
+
+    carregarFaccoes();
+
+    document.getElementById("faccao_name").addEventListener("input", () => {
+      const nome = document.getElementById("faccao_name").value.trim().toLowerCase();
+      const encontrado = faccoes.find(f => f.nome.toLowerCase() === nome);
+      tipoFaccaoSelecionada = encontrado ? encontrado.tipo : "normal";
+      calcularTotal();
+    });
+
+    document.getElementById("buyer_type").addEventListener("change", () => {
+      const tipo = document.getElementById("buyer_type").value;
+      document.getElementById("faccao_block").style.display = tipo === "faccao" ? "block" : "none";
+      calcularTotal();
+    });
+
+    const itemsGrid = document.getElementById("itemsGrid");
+    PRODUCTS.forEach((p) => {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.dataset.name = p;
+      div.innerHTML = `<div style="font-weight:600">${p}</div>
+        <div style="margin-top:8px">
+          Quantidade: <input class="qty" type="number" min="0" value="0">
+        </div>`;
+      itemsGrid.appendChild(div);
+    });
+
+    function calcularTotal() {
+      const tipo = document.getElementById("buyer_type").value === "faccao" ? tipoFaccaoSelecionada : "civil";
+      let total = 0;
+      document.querySelectorAll(".item").forEach(div => {
+        const nome = div.dataset.name;
+        const q = parseInt(div.querySelector("input").value || 0);
+        const preco = precos[nome]?.[tipo] || 0;
+        total += q * preco;
+      });
+      document.getElementById("totalDisplay").innerText = "Total: R$ " + total.toLocaleString("pt-BR");
+    }
+
+    document.addEventListener("input", e => {
+      if (e.target.classList.contains("qty")) calcularTotal();
+    });
+
+    document.getElementById("orderForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const buyerType = document.getElementById("buyer_type").value;
+      const faccaoName = buyerType === "faccao" ? document.getElementById("faccao_name").value.trim() : "";
+      const items = {};
+      PRODUCTS.forEach((p) => {
+        const div = [...document.querySelectorAll(".item")].find(d => d.dataset.name === p);
+        const q = parseInt(div.querySelector("input").value || 0);
+        items[p] = Math.max(0, q);
+      });
+
+      const payload = {
+        createdAt: new Date().toISOString(),
+        buyer_type: buyerType === "faccao" ? tipoFaccaoSelecionada : "civil",
+        name, phone, faccao_name: faccaoName, items, completed: false
+      };
+
+      await push(ref(db, "orders"), payload);
+      document.getElementById("orderForm").reset();
+      tipoFaccaoSelecionada = "normal";
+      document.getElementById("faccao_block").style.display = "none";
+      calcularTotal();
+      document.getElementById("successPopup").style.display = "block";
+      setTimeout(() => document.getElementById("successPopup").style.display = "none", 3000);
+    });
+  </script>
+</body>
+</html>

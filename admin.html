@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - Encomendas AURA</title>
+  <link rel="icon" href="Aurinha.png" />
+  <style>
+    :root{--bg:#0f0320;--glass:rgba(255,255,255,0.06);--accent:#c084fc;--muted:rgba(255,255,255,0.88)}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui}
+    body{background:linear-gradient(180deg,#0b0220 0%, #160428 100%);padding:40px;color:var(--muted)}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:20px;max-width:1100px;margin:auto}
+    header img{width:64px;height:64px;border-radius:12px;object-fit:cover}
+    h1{margin:0;font-size:22px;color:#fff}
+    .nav{margin-bottom:24px;display:flex;gap:10px;flex-wrap:wrap;max-width:1100px;margin:auto}
+    .nav a{padding:8px 14px;border-radius:10px;text-decoration:none;font-size:14px;background:var(--accent);color:white;font-weight:500}
+    .btn{background:var(--accent);color:#fff;padding:6px 12px;border-radius:8px;border:0;cursor:pointer;font-size:13px}
+    .btn.small{padding:4px 8px;font-size:12px}
+    table{width:100%;border-collapse:collapse;margin-top:20px}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;text-align:left;vertical-align:top}
+    .muted{color:rgba(255,255,255,0.7)}
+    .tag{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.08);font-size:12px}
+    main{max-width:1100px;margin:auto}
+  </style>
+</head>
+<body>
+  <header>
+    <img src="Aurinha.png" alt="Aurinha" />
+    <div><h1>Painel Admin AURA</h1></div>
+  </header>
+  <nav class="nav">
+    <a href="admin.html">Encomendas</a>
+    <a href="admin/entregas.html">Entregas</a>
+    <a href="admin/faccoes.html">Facções</a>
+    <a href="admin/precos.html">Preços</a>
+    <a href="admin/trabalhadores.html">Trabalhadores</a>
+  </nav>
+
+  <main>
+    <h2>Encomendas Pendentes</h2>
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Nome</th><th>Tipo</th><th>Facção</th><th>Itens</th><th>Responsável</th><th>Status</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="tbodyPendentes"></tbody>
+    </table>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyADKtlqJ-_Cb-ty1rT6gTjLw6BX5gA5JnY",
+      authDomain: "encomendas-aura.firebaseapp.com",
+      projectId: "encomendas-aura",
+      storageBucket: "encomendas-aura.firebasestorage.app",
+      messagingSenderId: "552913969297",
+      appId: "1:552913969297:web:f863b73e3d0caeeafddf30",
+      databaseURL: "https://encomendas-aura-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const ordersRef = ref(db, "orders");
+
+    const tbodyPend = document.getElementById("tbodyPendentes");
+
+    onValue(ordersRef, snap => {
+      const data = snap.val() || {};
+      const arr = Object.entries(data).sort((a,b)=>(b[1].createdAt||"").localeCompare(a[1].createdAt||""));
+
+      tbodyPend.innerHTML = arr.filter(([_, o]) => !o.completed).map(([id, o]) => renderRow(id, o)).join("");
+    });
+
+    function renderRow(id, o) {
+      return `<tr>
+        <td>${fmt(o.createdAt)}</td>
+        <td>${esc(o.name)}<br><span class="muted">${esc(o.phone||"")}</span></td>
+        <td>${esc(o.buyer_type||"")}</td>
+        <td>${esc(o.faccao_name||"-")}</td>
+        <td>${renderItems(o.items||{})}</td>
+        <td>${esc(o.responsavel||"-")}</td>
+        <td>${o.completed ? `✅ Entregue<br><span class='muted'>${fmt(o.entregueEm||"")}</span>` : "⏳ Pendente"}</td>
+        <td>
+          ${o.completed
+            ? `<button class="btn small" onclick="reabrir('${id}')">Reabrir</button>`
+            : `<button class="btn small" onclick="entregar('${id}')">Entregue</button>`}
+        </td>
+      </tr>`;
+    }
+
+    window.entregar = (id) => {
+      update(ref(db, `orders/${id}`), {
+        completed: true,
+        entregueEm: new Date().toISOString()
+      });
+    };
+
+    window.reabrir = (id) => {
+      update(ref(db, `orders/${id}`), {
+        completed: false,
+        entregueEm: null
+      });
+    };
+
+    function renderItems(items){
+      return Object.entries(items).filter(([_,q])=>q>0).map(([k,q])=>`${esc(k)} × ${q}`).join("<br>") || `<span class='muted'>(Sem itens)</span>`;
+    }
+    function esc(s){return (s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+    function fmt(i){try{return new Date(i).toLocaleString("pt-PT");}catch{return i;}}
+  </script>
+</body>
+</html>

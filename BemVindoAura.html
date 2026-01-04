@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bem-vindo ao Site de Encomendas da AURA 💜</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #0d001a;
+      overflow: hidden;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .background {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vw;
+      height: 100vh;
+      background: url("fantasma_aura_sem_fundo.png") no-repeat center center;
+      background-size: contain;
+      opacity: 0.2;
+      animation: pulse 5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.04); }
+    }
+
+    .content {
+      position: relative;
+      text-align: center;
+      z-index: 1;
+    }
+
+    h1 {
+      color: white;
+      font-size: 2.5rem;
+      text-shadow: 0 0 12px rgba(180,107,255,0.6);
+    }
+
+    .btn {
+      margin: 1rem;
+      padding: 1rem 2.5rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: white;
+      background: #b46bff;
+      border: none;
+      border-radius: 50px;
+      box-shadow: 0 0 20px rgba(180,107,255,0.6);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #9f4dff;
+      box-shadow: 0 0 30px rgba(180,107,255,0.8);
+      transform: scale(1.05);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10;
+    }
+
+    .modal-content {
+      background: rgba(255,255,255,0.06);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+      text-align: center;
+      color: white;
+      width: 300px;
+      box-shadow: 0 0 25px rgba(180,107,255,0.5);
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.3);
+      color: white;
+      font-size: 16px;
+    }
+
+    .modal-content button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #b46bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .modal-content button:hover {
+      background: #9f4dff;
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  <div class="content">
+    <h1>Bem-vindo ao Site de Encomendas da AURA 💜<br>
+      <small style="font-size: 1rem; opacity: 0.7">Vamos iniciar o teu pedido</small>
+    </h1>
+    <button class="btn" onclick="window.location.href='index.html'">Cliente</button>
+    <button class="btn" onclick="abrirModal()">AURA</button>
+  </div>
+
+  <div id="modal" class="modal" style="display:none">
+    <div class="modal-content">
+      <h2>🔒 Acesso AURA</h2>
+      <input type="password" id="adminPass" placeholder="Palavra-passe...">
+      <button onclick="verificarSenha()">Entrar</button>
+      <button onclick="fecharModal()" style="background:#555;margin-top:10px">Voltar</button>
+    </div>
+  </div>
+
+  <script>
+    function abrirModal() {
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function fecharModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    function verificarSenha() {
+      const pass = document.getElementById('adminPass').value;
+      if (pass === "entregas_aura") {
+        window.location.href = "/admin.html";
+      } else {
+        alert("Palavra-passe incorreta.");
+      }
+    }
+  </script>
+</body>
+</html>
