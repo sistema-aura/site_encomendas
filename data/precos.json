@@ -5,13 +5,13 @@
     "parceria": 155,
     "alianca": 150
   },
-  "Sub": {
+  "Munição de Sub": {
     "civil": 260,
     "normal": 240,
     "parceria": 235,
     "alianca": 225
   },
-  "Fuzil": {
+  "Munição de Fuzil": {
     "civil": 350,
     "normal": 325,
     "parceria": 290,
